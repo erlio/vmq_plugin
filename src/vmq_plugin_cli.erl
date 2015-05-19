@@ -259,8 +259,6 @@ plugin_disable_usage() ->
      "  Disables an application plugin.\n\n",
      "Options\n\n",
      "  --name, -n\n",
-     "      The name of the plugin application\n",
-     "  --path, -p\n",
-     "      The path to the plugin application\n"
+     "      The name of the plugin application\n"
     ].
 
