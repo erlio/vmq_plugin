@@ -244,40 +244,21 @@ plugin_show_usage() ->
 
 plugin_enable_usage() ->
     ["vmq-admin plugin enable\n\n",
-     "  Enables either an Application plugin or a module plugin. The application\n",
-     "  plugins are bundled as Erlang OTP apps. If the application code is not yet\n"
-     "  loaded you have to specify the --path=<PathToPlugin>. If the plugin is\n"
-     "  implemented in a single Erlang module make sure that the module is loaded.\n\n",
+     "  Enables an application plugin. Plugins are bundled as Erlang OTP apps.\n",
+     "  If the application code is not yet loaded you have to specify the\n",
+     "  --path=<PathToPlugin>.\n\n"
      "Options\n\n",
      "  --name, -n\n",
      "      The name of the plugin application\n",
      "  --path, -p\n",
-     "      The path to the plugin application\n",
-     "  --module, -m\n",
-     "      Name of the module that implements the plugin, not needed if --name is used\n",
-     "  --function, -f\n",
-     "      Name of the function that implements the hook, not needed if --name is used\n",
-     "  --arity, -a\n",
-     "      Nr of arguments the function specified in --function takes\n",
-     "  --hook, -h\n",
-     "      The hook name in case it differs from the function name (--function)\n"
+     "      The path to the plugin application\n"
     ].
 
 plugin_disable_usage() ->
     ["vmq-admin plugin disable\n\n",
-     "  Disables either an application plugin or a module plugin.\n\n",
+     "  Disables an application plugin.\n\n",
      "Options\n\n",
      "  --name, -n\n",
-     "      The name of the plugin application\n",
-     "  --path, -p\n",
-     "      The path to the plugin application\n",
-     "  --module, -m\n",
-     "      Name of the module that implements the plugin, not needed if --name is used\n",
-     "  --function, -f\n",
-     "      Name of the function that implements the hook, not needed if --name is used\n",
-     "  --arity, -a\n",
-     "      Nr of arguments the function specified in --function takes\n",
-     "  --hook, -h\n",
-     "      The hook name in case it differs from the function name (--function)\n"
+     "      The name of the plugin application\n"
     ].
 
