@@ -479,9 +479,10 @@ start_plugin(App) ->
                 true ->
                     %% does the App Module specifies a custom
                     %% start/1 function
-                    case lists:member({start, 0}, apply(App, module_info, [exports])) of
+                    {ok, {StartMod,_}} = application:get_key(App, mod),
+                    case lists:member({start, 0}, apply(StartMod, module_info, [exports])) of
                         true ->
-                            apply(App, start, []);
+                            apply(StartMod, start, []);
                         false ->
                             {ok, _} = application:ensure_all_started(App)
                     end;
