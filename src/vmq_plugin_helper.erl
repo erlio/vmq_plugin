@@ -29,7 +29,33 @@ all_till_ok([{Module, Fun}|Rest], Params, ErrAcc) ->
     case apply(Module, Fun, Params) of
         ok -> ok;
         {ok, V} -> {ok, V};
+        next ->
+            all_till_ok(Rest, Params, ErrAcc);
+        {next, Aux} ->
+            all_till_aux_ok(Rest, Params, Aux, ErrAcc);
         E -> all_till_ok(Rest, Params, [E|ErrAcc])
     end;
+all_till_ok([], _, []) ->
+    {error, no_matching_hook_found};
 all_till_ok([], _, ErrAcc) ->
+    {error, ErrAcc}.
+
+all_till_aux_ok([{Module, Fun}|Rest] = Hooks, Params, Aux, ErrAcc) ->
+    Arity = length(Params),
+    case lists:keyfind(Fun, 1, Module:module_info(exports)) of
+        {Fun, Arity} -> all_till_ok(Hooks, Params, ErrAcc);
+        {Fun, NewArity} when NewArity =:= (Arity + 1) ->
+            case apply(Module, Fun, Params ++ [Aux]) of
+                ok -> ok;
+                {ok, V} -> {ok, V};
+                next ->
+                    all_till_ok(Rest, Params, ErrAcc);
+                {next, Aux} ->
+                    all_till_aux_ok(Rest, Params, Aux, ErrAcc);
+                E -> all_till_ok(Rest, Params, [E|ErrAcc])
+            end
+    end;
+all_till_aux_ok([], _, _, []) ->
+    {error, no_matching_hook_found};
+all_till_aux_ok([], _, _, ErrAcc) ->
     {error, ErrAcc}.
