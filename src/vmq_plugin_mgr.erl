@@ -46,6 +46,10 @@
          other_sample_hook_d/1,
          other_sample_hook_e/1,
          other_sample_hook_f/1,
+         other_sample_hook_g/1,
+         other_sample_hook_h/2,
+         other_sample_hook_i/2,
+         other_sample_hook_j/2,
          other_sample_hook_x/1
         ]).
 -endif.
@@ -785,7 +789,7 @@ all_clauses(I, [], Acc, Info) ->
 
 all_till_ok_clauses(I, [{Name, _, _, Arity} = Hook |Rest], Acc) ->
     Hooks = [H || {N, _, _, A} = H <- Rest,
-                  (N == Name) and (A == Arity)],
+                  (N == Name) and ((A == Arity) or (A == (Arity + 1)))],
     Clause =
     clause(I, Name, Arity,
            [{call, 1, {atom, 1, apply},
@@ -885,6 +889,22 @@ other_sample_hook_e(V) ->
 other_sample_hook_f(V) ->
     io:format(user, "called other_sample_hook_f(~p)~n", [V]),
     ok.
+
+other_sample_hook_g(V) ->
+    io:format(user, "called other_sample_hook_g(~p)~n", [V]),
+    {next, [my, aux, list]}.
+
+other_sample_hook_h(V, Aux) ->
+    io:format(user, "called other_sample_hook_h(~p, ~p)~n", [V, Aux]),
+    ok.
+
+other_sample_hook_i(V, Aux) ->
+    io:format(user, "called other_sample_hook_i(~p, ~p)~n", [V, Aux]),
+    next.
+
+other_sample_hook_j(V, Aux) ->
+    io:format(user, "called other_sample_hook_j(~p, ~p)~n", [V, Aux]),
+    {error, not_ok}.
 
 other_sample_hook_x(V) ->
     exit({other_sampl_hook_x_called_but_should_not, V}).
@@ -1045,6 +1065,45 @@ vmq_module_plugin_test() ->
     vmq_plugin_mgr:disable_module_plugin(sample_all_till_ok_hook, ?MODULE, other_sample_hook_x, 1),
     call_no_hooks().
 
+all_till_aux_ok_test() ->
+    application:load(vmq_plugin),
+    Hooks = [
+             % ok case: an aux_hook returns ok
+             {sample_all_till_ok_hook1, ?MODULE, other_sample_hook_g, 1, []},
+             {sample_all_till_ok_hook1, ?MODULE, other_sample_hook_h, 2, []},
+             % next case: an aux hook returns next
+             {sample_all_till_ok_hook2, ?MODULE, other_sample_hook_g, 1, []},
+             {sample_all_till_ok_hook2, ?MODULE, other_sample_hook_i, 2, []},
+             % error case: an aux hook returns error
+             {sample_all_till_ok_hook3, ?MODULE, other_sample_hook_g, 1, []},
+             {sample_all_till_ok_hook3, ?MODULE, other_sample_hook_j, 2, []}
+            ],
+    application:set_env(vmq_plugin, vmq_plugin_hooks, Hooks),
+    %% we have to step out .eunit
+    application:set_env(vmq_plugin, plugin_dir, "."),
+    {ok, _} = application:ensure_all_started(vmq_plugin),
+    %% no plugin is yet registered
+    call_no_hooks(),
+
+    %% ENABLE PLUGIN
+    ?assertEqual(ok, vmq_plugin_mgr:enable_plugin(
+                       vmq_plugin,
+                       ["./_build/test/lib/vmq_plugin"])),
+    ?assert(lists:keyfind(vmq_plugin, 1, application:which_applications()) /= false),
+
+    ?assertEqual(ok, vmq_plugin:all_till_ok(sample_all_till_ok_hook1, [10])),
+    ?assertEqual({error, no_matching_hook_found}, vmq_plugin:all_till_ok(sample_all_till_ok_hook2, [10])),
+    ?assertEqual({error, [{error, not_ok}]}, vmq_plugin:all_till_ok(sample_all_till_ok_hook3, [10])),
+
+    vmq_plugin_mgr:disable_module_plugin(sample_all_till_ok_hook1, ?MODULE, other_sample_hook_g, 1),
+    vmq_plugin_mgr:disable_module_plugin(sample_all_till_ok_hook1, ?MODULE, other_sample_hook_h, 2),
+    vmq_plugin_mgr:disable_module_plugin(sample_all_till_ok_hook2, ?MODULE, other_sample_hook_g, 1),
+    vmq_plugin_mgr:disable_module_plugin(sample_all_till_ok_hook2, ?MODULE, other_sample_hook_i, 2),
+    vmq_plugin_mgr:disable_module_plugin(sample_all_till_ok_hook3, ?MODULE, other_sample_hook_g, 1),
+    vmq_plugin_mgr:disable_module_plugin(sample_all_till_ok_hook3, ?MODULE, other_sample_hook_j, 2),
+    call_no_hooks().
+
+
 call_no_hooks() ->
     ?assertEqual({error, no_matching_hook_found},
                  vmq_plugin:only(sample_hook, [])),
@@ -1088,4 +1147,6 @@ call_hooks() ->
 
     %% ALL_TILL_OK Hook Tests
     ?assertEqual(ok, vmq_plugin:all_till_ok(sample_all_till_ok_hook, [10])).
+
+
 -endif.
